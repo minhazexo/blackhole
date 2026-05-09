@@ -1,41 +1,50 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
-export function useGravitationalIntensity(initialIntensity = 1) {
-  const [intensity, setIntensity] = useState(initialIntensity)
-  const [isHighIntensity, setIsHighIntensity] = useState(false)
-  const targetIntensityRef = useRef(initialIntensity)
-  const currentIntensityRef = useRef(initialIntensity)
+export function useGravitationalIntensity(initialLevelIdx = 1) {
+  const intensityLevels = [0.5, 1.0, 2.0, 3.5, 5.0]
+  const levelNames = ['MINIMAL', 'LOW', 'STABLE', 'HIGH', 'CRITICAL']
+  
+  const [levelIdx, setLevelIdx] = useState(initialLevelIdx)
+  const [intensity, setIntensity] = useState(intensityLevels[initialLevelIdx])
+  
+  const targetIntensityRef = useRef(intensityLevels[initialLevelIdx])
+  const currentIntensityRef = useRef(intensityLevels[initialLevelIdx])
 
-  const increaseIntensity = useCallback(() => {
-    setIsHighIntensity(true)
-    targetIntensityRef.current = 2.5
-  }, [])
-
-  const decreaseIntensity = useCallback(() => {
-    setIsHighIntensity(false)
-    targetIntensityRef.current = 1.0
-  }, [])
-
-  const toggleIntensity = useCallback(() => {
-    if (isHighIntensity) {
-      decreaseIntensity()
-    } else {
-      increaseIntensity()
+  // Smoothly update the intensity state
+  useEffect(() => {
+    let animationFrame;
+    const update = () => {
+      const delta = (targetIntensityRef.current - currentIntensityRef.current) * 0.08
+      if (Math.abs(delta) > 0.0001) {
+        currentIntensityRef.current += delta
+        setIntensity(currentIntensityRef.current)
+      }
+      animationFrame = requestAnimationFrame(update)
     }
-  }, [isHighIntensity, increaseIntensity, decreaseIntensity])
-
-  const setCustomIntensity = useCallback((value) => {
-    targetIntensityRef.current = Math.max(0.5, Math.min(3.0, value))
-    setIsHighIntensity(targetIntensityRef.current > 1.5)
+    animationFrame = requestAnimationFrame(update)
+    return () => cancelAnimationFrame(animationFrame)
   }, [])
+
+  const cycleIntensity = useCallback(() => {
+    const nextIdx = (levelIdx + 1) % intensityLevels.length
+    setLevelIdx(nextIdx)
+    targetIntensityRef.current = intensityLevels[nextIdx]
+  }, [levelIdx, intensityLevels.length])
+
+  const setLevel = useCallback((idx) => {
+    if (idx >= 0 && idx < intensityLevels.length) {
+      setLevelIdx(idx)
+      targetIntensityRef.current = intensityLevels[idx]
+    }
+  }, [intensityLevels.length])
 
   return {
     intensity,
-    isHighIntensity,
-    increaseIntensity,
-    decreaseIntensity,
-    toggleIntensity,
-    setCustomIntensity,
+    levelIdx,
+    levelName: levelNames[levelIdx],
+    isHighIntensity: levelIdx >= 3,
+    cycleIntensity,
+    setLevel,
     targetIntensityRef,
     currentIntensityRef
   }

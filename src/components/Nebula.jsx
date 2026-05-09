@@ -1,28 +1,36 @@
 import { useRef, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { nebulaVertexShader, nebulaFragmentShader } from '../shaders/nebula'
 
-export default function Nebula() {
+export default function Nebula({ brightness = 1.0, position = [0, 0, -20], scale = 1.0, rotation = [0, 0, 0] }) {
   const meshRef = useRef()
 
   const uniforms = useMemo(() => ({
     uTime:   { value: 0 },
     uColor1: { value: new THREE.Color('#0a0018') },  // Deep violet
     uColor2: { value: new THREE.Color('#001840') },  // Deep ocean blue
-    uColor3: { value: new THREE.Color('#100030') }   // Dark purple
+    uColor3: { value: new THREE.Color('#100030') },   // Dark purple
+    uBrightness: { value: brightness ?? 1.0 }
   }), [])
 
+  const { camera } = useThree()
   useFrame((state) => {
-    if (uniforms && uniforms.uTime) {
-      uniforms.uTime.value = state.clock.elapsedTime
+    if (uniforms) {
+      if (uniforms.uTime) uniforms.uTime.value = state.clock.elapsedTime
+      if (uniforms.uBrightness) uniforms.uBrightness.value = brightness
+    }
+    
+    // Billboarding: Make nebula face the camera for a realistic volumetric appearance
+    if (meshRef.current) {
+      meshRef.current.quaternion.copy(camera.quaternion)
     }
   })
 
   return (
-    <group>
+    <group position={position} scale={scale} rotation={rotation}>
       {/* Main nebula backdrop */}
-      <mesh ref={meshRef} position={[0, 0, -20]}>
+      <mesh ref={meshRef} position={[0, 0, 0]}>
         <planeGeometry args={[50, 50, 1, 1]} />
         <shaderMaterial
           vertexShader={nebulaVertexShader}

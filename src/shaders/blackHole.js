@@ -20,6 +20,7 @@ export const blackHoleFragmentShader = `
   uniform float uIntensity;
   uniform vec2 uMouse;
   uniform int uQuality;
+  uniform float uBrightness;
 
   varying vec3 vWorldPos;
   varying vec2 vUv;
@@ -102,7 +103,7 @@ export const blackHoleFragmentShader = `
     
     // Apply gravitational redshift - colors deepen near horizon
     float redshift = gravitationalRedshift(r);
-    color *= beam * 2.5 * uIntensity * redshift;
+    color *= beam * 2.5 * uIntensity * redshift * uBrightness;
 
     return vec4(color * density, density * 0.8);
   }
@@ -118,7 +119,7 @@ export const blackHoleFragmentShader = `
     vec3 colorAcc = vec3(0.0);
     float alphaAcc = 0.0;
     
-    int maxSteps = (uQuality == 2) ? 80 : (uQuality == 1) ? 50 : 35;
+    int maxSteps = (uQuality >= 2) ? 100 : (uQuality >= 1) ? 80 : 65;
     
     bool hitHorizon = false;
     float globalMinDist = 100.0;
@@ -174,17 +175,17 @@ export const blackHoleFragmentShader = `
     // We use the closest approach (globalMinDist) to analytically add the glowing ring
     if (!hitHorizon && alphaAcc < 0.99) {
       float photonRing = exp(-pow(globalMinDist - RS * 1.5, 2.0) * 1200.0) * 2.5;
-      colorAcc += vec3(1.0, 0.7, 0.3) * photonRing * (1.0 - alphaAcc) * uIntensity;
+      colorAcc += vec3(1.0, 0.7, 0.3) * photonRing * (1.0 - alphaAcc) * uIntensity * uBrightness;
       alphaAcc = min(1.0, alphaAcc + photonRing * 0.5);
     }
 
     // If we hit the horizon, the pixel is absolutely black
     // If we didn't hit anything, alpha is low, revealing background stars!
     if (hitHorizon) {
-      // The event horizon is pure black, but we keep the glowing disk in front of it!
-      // Since we marched front-to-back, colorAcc contains the disk *in front* of the horizon.
-      // We just force alpha to 1.0 so it occludes the background, and add no more light.
+      // THE VOID: The event horizon must be absolute black.
+      // We keep the front-side disk colors but ensure no light from behind or photon sphere enters.
       alphaAcc = 1.0;
+      colorAcc *= 0.8; // Deepen the shadow of the disk in front of the horizon
     }
 
     // Ensure no NaNs or negative colors before tone mapping

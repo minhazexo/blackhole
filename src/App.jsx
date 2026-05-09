@@ -13,20 +13,29 @@ import { debounce } from './utils/performance'
 function AppContent() {
   const [loading, setLoading] = useState(true)
   const [autoRotate, setAutoRotate] = useState(false)
-  const [viewMode, setViewMode] = useState('cinematic')
-  const [soundEnabled, setSoundEnabled] = useState(false)
-  const [quality, setQuality] = useState(2) // 0 = low, 1 = medium, 2 = high
+  const [viewMode, setViewMode] = useState('oblique')
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [quality, setQuality] = useState(0) // 0 = low, 1 = medium, 2 = high
   const [showStats, setShowStats] = useState(false)
+  const [brightnessLevelIdx, setBrightnessLevelIdx] = useState(2) // 0=DIM, 1=LOW, 2=NOMINAL, 3=HIGH, 4=MAX
+  const [showNebula, setShowNebula] = useState(false)
+  const [autoRotateSpeedIdx, setAutoRotateSpeedIdx] = useState(1) // 0=SLOW, 1=NORMAL, 2=FAST, 3=WARP
+
+  const orbitSpeeds = [0.1, 0.5, 2.0, 5.0]
+  const currentOrbitSpeed = orbitSpeeds[autoRotateSpeedIdx]
+  
+  const brightnessLevels = [0.2, 0.5, 1.0, 1.5, 2.0]
+  const currentBrightness = brightnessLevels[brightnessLevelIdx]
   
   // Initialize device capabilities
   const deviceCapabilities = getDeviceCapabilities()
   
-  // Set initial quality based on device
+  // Set initial quality (Static default: Low)
   useEffect(() => {
-    const initialQuality = deviceCapabilities.qualitySettings.tier === 'high' ? 2 :
-                          deviceCapabilities.qualitySettings.tier === 'medium' ? 1 : 0
-    setQuality(initialQuality)
-  }, [deviceCapabilities])
+    setQuality(0)
+    console.log('%c ◎ PROJECT SINGULARITY INITIALIZED ', 'background: #000; color: #00ffff; font-weight: bold; border: 1px solid #00ffff; padding: 4px;');
+    console.log('%c > STATUS: NOMINAL \n > VERSION: 2.8.4 \n > CORE_METRIC: KERR_VACUUM ', 'color: #00ffff; font-family: monospace;');
+  }, [])
   
   // Performance context - stats and quality are managed by PerformanceManager inside Canvas
   const { stats, quality: recommendedQuality, updateQuality } = usePerformanceContext()
@@ -34,22 +43,18 @@ function AppContent() {
   // Track if user manually set quality
   const manualQualityRef = useRef(false)
   
-  // Sync quality from performance context (auto-adjustments)
-  useEffect(() => {
-    if (!manualQualityRef.current && recommendedQuality) {
-      const qualityMap = { 'high': 2, 'medium': 1, 'low': 0, 'very-low': 0 }
-      setQuality(qualityMap[recommendedQuality] || 1)
-    }
-  }, [recommendedQuality])
+
   
   // Gravitational intensity state
   const { 
     intensity, 
+    levelIdx,
+    levelName,
     isHighIntensity, 
-    toggleIntensity,
+    cycleIntensity,
     targetIntensityRef,
     currentIntensityRef 
-  } = useGravitationalIntensity(1)
+  } = useGravitationalIntensity(0)
   
   // Audio system
   const { 
@@ -59,14 +64,6 @@ function AppContent() {
     playInteractionSound,
     setVolume 
   } = useAudio()
-
-  // Smooth intensity transition
-  useEffect(() => {
-    const interval = setInterval(() => {
-      currentIntensityRef.current += (targetIntensityRef.current - currentIntensityRef.current) * 0.02
-    }, 16)
-    return () => clearInterval(interval)
-  }, [])
 
   // Handle sound toggle
   const handleSoundToggle = useCallback((enabled) => {
@@ -79,11 +76,15 @@ function AppContent() {
     }
   }, [initializeAudio, playAmbientSound])
 
+  useEffect(() => {
+    console.log('%c ◎ HUD_INTERFACE: LINKED ', 'color: #00ffff; font-family: monospace;');
+  }, [])
+
   // Handle intensity toggle
   const handleIntensityToggle = useCallback(() => {
-    toggleIntensity()
+    cycleIntensity()
     playInteractionSound('pulse')
-  }, [toggleIntensity, playInteractionSound])
+  }, [cycleIntensity, playInteractionSound])
 
   // Handle auto-rotate toggle
   const handleAutoRotateToggle = useCallback(() => {
@@ -124,18 +125,34 @@ function AppContent() {
     setShowStats(prev => !prev)
   }, [])
 
-  // Handle mouse click for gravitational intensity
+  // Global hotkey for Datalog (P key)
   useEffect(() => {
-    const handleClick = (e) => {
-      // Check if click is on canvas (not UI)
-      if (e.target.tagName === 'CANVAS') {
-        handleIntensityToggle()
+    const handleKeyPress = (e) => {
+      if ((e.key === 'p' || e.key === 'P') && !loading) {
+        toggleStats()
       }
     }
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [toggleStats, loading])
 
-    window.addEventListener('click', handleClick)
-    return () => window.removeEventListener('click', handleClick)
-  }, [handleIntensityToggle])
+  // Handle brightness change
+  const handleBrightnessChange = useCallback((newIdx) => {
+    setBrightnessLevelIdx(newIdx)
+    playInteractionSound('click')
+  }, [playInteractionSound])
+
+  const toggleNebula = useCallback(() => {
+    setShowNebula(prev => !prev)
+    playInteractionSound('click')
+  }, [playInteractionSound])
+
+  const cycleOrbitSpeed = useCallback(() => {
+    setAutoRotateSpeedIdx(prev => (prev + 1) % orbitSpeeds.length)
+    playInteractionSound('click')
+  }, [playInteractionSound, orbitSpeeds.length])
+
+
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -148,7 +165,10 @@ function AppContent() {
         enableParticles={quality >= 0}
         enableDust={quality >= 0}
         quality={quality}
+        brightness={currentBrightness}
         viewMode={viewMode}
+        showNebula={showNebula}
+        autoRotateSpeed={currentOrbitSpeed}
       />
       
 
@@ -168,16 +188,27 @@ function AppContent() {
             autoRotate={autoRotate}
             quality={quality}
             viewMode={viewMode}
-            onViewToggle={() => {
-              const modes = ['cinematic', 'top', 'edge'];
-              setViewMode(prev => modes[(modes.indexOf(prev) + 1) % modes.length]);
+            onViewToggle={(mode) => {
+              const modes = ['cinematic', 'top', 'edge', 'nadir', 'close', 'distant', 'oblique', 'wormhole', 'horizon', 'galactic'];
+              if (mode) {
+                setViewMode(mode);
+              } else {
+                setViewMode(prev => modes[(modes.indexOf(prev) + 1) % modes.length]);
+              }
               playInteractionSound('click');
             }}
             onIntensityToggle={handleIntensityToggle}
+            gravityLevelName={levelName}
             onSoundToggle={handleSoundToggle}
             onAutoRotateToggle={handleAutoRotateToggle}
             onQualityChange={handleQualityChange}
             onToggleStats={toggleStats}
+            brightnessLevelIdx={brightnessLevelIdx}
+            onBrightnessChange={handleBrightnessChange}
+            showNebula={showNebula}
+            onNebulaToggle={toggleNebula}
+            autoRotateSpeedIdx={autoRotateSpeedIdx}
+            onOrbitSpeedChange={cycleOrbitSpeed}
           />
         </div>
       )}

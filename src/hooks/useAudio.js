@@ -4,14 +4,25 @@ export function useAudio() {
   const audioContextRef = useRef(null)
   const ambientGainRef = useRef(null)
   const spatialGainRef = useRef(null)
+  const musicRef = useRef(null)
   const isInitializedRef = useRef(false)
 
   const initializeAudio = useCallback(() => {
-    if (isInitializedRef.current) return
+    if (isInitializedRef.current) {
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume()
+      }
+      return
+    }
 
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext
       audioContextRef.current = new AudioContext()
+
+      // Handle suspended state (common in modern browsers)
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume()
+      }
 
       // Create gain nodes for volume control
       ambientGainRef.current = audioContextRef.current.createGain()
@@ -20,9 +31,23 @@ export function useAudio() {
       spatialGainRef.current = audioContextRef.current.createGain()
       spatialGainRef.current.gain.value = 0
 
-      // Connect to destination
       ambientGainRef.current.connect(audioContextRef.current.destination)
       spatialGainRef.current.connect(audioContextRef.current.destination)
+
+      // Initialize background music element
+      if (!musicRef.current) {
+        const baseUrl = import.meta.env.BASE_URL || '/'
+        musicRef.current = new Audio(`${baseUrl}videoplayback.mp3`)
+        musicRef.current.loop = true
+        musicRef.current.volume = 0.7 // Increased volume for better presence
+        
+        // Error handling with fallback to cinematic remote track
+        musicRef.current.onerror = () => {
+          console.warn('videoplayback.mp3 failed to load. Using fallback cinematic track.')
+          musicRef.current.src = 'https://assets.mixkit.co/music/preview/mixkit-deep-space-97.mp3'
+          musicRef.current.load()
+        }
+      }
 
       isInitializedRef.current = true
     } catch (error) {
@@ -30,59 +55,79 @@ export function useAudio() {
     }
   }, [])
 
+  const activeOscillators = useRef([])
+
   const playAmbientSound = useCallback((enabled = true) => {
     if (!audioContextRef.current || !ambientGainRef.current) return
 
     const currentTime = audioContextRef.current.currentTime
 
     if (enabled) {
-      // Create deep space drone
-      const oscillator1 = audioContextRef.current.createOscillator()
-      const oscillator2 = audioContextRef.current.createOscillator()
-      const oscillator3 = audioContextRef.current.createOscillator()
+      console.log('Audio: Starting Interstellar soundscape')
+      
+      // Stop any existing oscillators first
+      activeOscillators.current.forEach(osc => {
+        try { osc.stop(); osc.disconnect(); } catch (e) {}
+      });
+      activeOscillators.current = [];
 
-      oscillator1.type = 'sine'
-      oscillator1.frequency.setValueAtTime(40, currentTime)
-      oscillator1.frequency.exponentialRampToValueAtTime(35, currentTime + 10)
+      // Ensure context is running
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume()
+      }
 
-      oscillator2.type = 'sine'
-      oscillator2.frequency.setValueAtTime(60, currentTime)
-      oscillator2.frequency.exponentialRampToValueAtTime(55, currentTime + 15)
+      // Try to play the background music file
+      if (musicRef.current) {
+        musicRef.current.play().catch(err => {
+          console.warn('Interstellar.mp3 not found or blocked. Falling back to synthetic drone.', err)
+        })
+      }
 
-      oscillator3.type = 'triangle'
-      oscillator3.frequency.setValueAtTime(80, currentTime)
-      oscillator3.frequency.exponentialRampToValueAtTime(75, currentTime + 20)
+      // Maintain the procedural drone as a "thickener" layer
+      const oscs = [
+        { freq: 40, type: 'sine', gain: 0.04 },
+        { freq: 60, type: 'sine', gain: 0.03 },
+        { freq: 80, type: 'triangle', gain: 0.02 },
+        { freq: 220, type: 'sine', gain: 0.015 }
+      ];
 
-      const gain1 = audioContextRef.current.createGain()
-      const gain2 = audioContextRef.current.createGain()
-      const gain3 = audioContextRef.current.createGain()
-
-      gain1.gain.setValueAtTime(0, currentTime)
-      gain1.gain.linearRampToValueAtTime(0.02, currentTime + 2)
-
-      gain2.gain.setValueAtTime(0, currentTime)
-      gain2.gain.linearRampToValueAtTime(0.015, currentTime + 3)
-
-      gain3.gain.setValueAtTime(0, currentTime)
-      gain3.gain.linearRampToValueAtTime(0.01, currentTime + 4)
-
-      oscillator1.connect(gain1)
-      oscillator2.connect(gain2)
-      oscillator3.connect(gain3)
-
-      gain1.connect(ambientGainRef.current)
-      gain2.connect(ambientGainRef.current)
-      gain3.connect(ambientGainRef.current)
-
-      oscillator1.start(currentTime)
-      oscillator2.start(currentTime)
-      oscillator3.start(currentTime)
+      oscs.forEach(cfg => {
+        const osc = audioContextRef.current.createOscillator();
+        const g = audioContextRef.current.createGain();
+        osc.type = cfg.type;
+        osc.frequency.setValueAtTime(cfg.freq, currentTime);
+        osc.frequency.exponentialRampToValueAtTime(cfg.freq * 0.9, currentTime + 10);
+        
+        g.gain.setValueAtTime(0, currentTime);
+        g.gain.linearRampToValueAtTime(cfg.gain, currentTime + 2);
+        
+        osc.connect(g);
+        g.connect(ambientGainRef.current);
+        osc.start(currentTime);
+        activeOscillators.current.push(osc);
+      });
 
       // Fade in ambient
-      ambientGainRef.current.gain.linearRampToValueAtTime(1, currentTime + 3)
+      ambientGainRef.current.gain.setTargetAtTime(1, currentTime, 1.5)
     } else {
+      console.log('Audio: Stopping soundscape')
+      
+      // Stop music
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current.currentTime = 0;
+      }
+
       // Fade out ambient
-      ambientGainRef.current.gain.linearRampToValueAtTime(0, currentTime + 1)
+      ambientGainRef.current.gain.setTargetAtTime(0, currentTime, 0.5)
+      
+      // Stop oscillators after fade
+      setTimeout(() => {
+        activeOscillators.current.forEach(osc => {
+          try { osc.stop(); osc.disconnect(); } catch (e) {}
+        });
+        activeOscillators.current = [];
+      }, 1000);
     }
   }, [])
 
@@ -117,6 +162,11 @@ export function useAudio() {
 
   const playInteractionSound = useCallback((type = 'click') => {
     if (!audioContextRef.current || !spatialGainRef.current) return
+
+    // Proactive resume for interaction sounds
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume()
+    }
 
     const currentTime = audioContextRef.current.currentTime
 

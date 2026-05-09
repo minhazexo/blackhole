@@ -7,7 +7,7 @@ import * as THREE from 'three'
 const BF_NORMAL   = 27
 const BF_ADD      = 4
 
-export default function PostProcessing({ quality = 2 }) {
+export default function PostProcessing({ quality = 2, brightness = 1.0 }) {
   const chromaticOffset = useMemo(() => new THREE.Vector2(
     quality >= 2 ? 0.0035 : 0.002,
     quality >= 2 ? 0.0035 : 0.002
@@ -20,10 +20,10 @@ export default function PostProcessing({ quality = 2 }) {
 
       {/* Primary bloom — event horizon & disk highlights */}
       <Bloom
-        luminanceThreshold={quality >= 2 ? 0.12 : 0.22}
-        luminanceSmoothing={quality >= 2 ? 0.95 : 0.80}
+        luminanceThreshold={quality >= 2 ? 0.35 : 0.45}
+        luminanceSmoothing={quality >= 2 ? 0.90 : 0.75}
         mipmapBlur
-        intensity={quality >= 2 ? 2.5 : quality >= 1 ? 1.8 : 1.2}
+        intensity={(quality >= 2 ? 2.5 : quality >= 1 ? 1.8 : 1.2) * brightness}
         radius={quality >= 2 ? 0.65 : 0.45}
         levels={quality >= 2 ? 6 : 4}
       />
@@ -34,7 +34,7 @@ export default function PostProcessing({ quality = 2 }) {
           luminanceThreshold={quality >= 2 ? 0.35 : 0.45}
           luminanceSmoothing={quality >= 2 ? 0.90 : 0.80}
           mipmapBlur
-          intensity={quality >= 2 ? 1.5 : 1.0}
+          intensity={(quality >= 2 ? 1.5 : 1.0) * brightness}
           radius={quality >= 2 ? 1.8 : 1.2}
           levels={quality >= 2 ? 5 : 3}
         />

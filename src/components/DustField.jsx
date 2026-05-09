@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { dustVertexShader, dustFragmentShader } from '../shaders/dust'
 
-export default function DustField({ count = 2500, intensity = 1, quality = 2 }) {
+export default function DustField({ count = 2500, intensity = 1, quality = 2, brightness = 1.0 }) {
   const pointsRef = useRef()
 
   const [positions, sizes, speeds, offsets, lives, velocities] = useMemo(() => {
@@ -42,13 +42,15 @@ export default function DustField({ count = 2500, intensity = 1, quality = 2 }) 
     uTime: { value: 0 },
     uPixelRatio: { value: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 2) : 1 },
     uGravity: { value: intensity ?? 1 },
-    uQuality: { value: quality ?? 2 }
+    uQuality: { value: quality ?? 2 },
+    uBrightness: { value: brightness ?? 1.0 }
   }), [intensity, quality])
 
   useFrame((state) => {
     if (uniforms) {
       if (uniforms.uTime) uniforms.uTime.value = state.clock.elapsedTime
       if (uniforms.uGravity) uniforms.uGravity.value = intensity
+      if (uniforms.uBrightness) uniforms.uBrightness.value = brightness
     }
   })
 

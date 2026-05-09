@@ -101,6 +101,7 @@ export const starsFragmentShader = `
   uniform float uTime;
   uniform float uIntensity;
   uniform int uQuality;
+  uniform float uBrightness;
 
   // Blackbody approximation
   vec3 blackbody(float t) {
@@ -145,6 +146,6 @@ export const starsFragmentShader = `
       color.b *= (1.0 - ch * 0.5);
     }
 
-    gl_FragColor = vec4(color, alpha);
+    gl_FragColor = vec4(color * uBrightness, alpha);
   }
 `;

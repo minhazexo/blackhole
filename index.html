@@ -3,21 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚫</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Event Horizon | Black Hole Observatory</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Singularity | Cinematic Black Hole Observatory</title>
+    <meta name="description" content="Experience a physically accurate, cinematic simulation of a Kerr metric black hole with relativistic raymarching and frame-dragging." />
     
-    <!-- Google Fonts: Inter for UI text, JetBrains Mono for data displays -->
+    <!-- Open Graph / SEO -->
+    <meta property="og:title" content="Singularity | Black Hole Simulation" />
+    <meta property="og:description" content="Interactive physically-accurate black hole observatory." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#000000">
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   </head>
-  <body>
+  <body style="background: black; margin: 0; overflow: hidden;">
     <div id="root"></div>
     <script>
-      // Suppress Three.js deprecation warnings
+      // Suppress Three.js deprecation warnings in production
       const _warn = console.warn
       console.warn = function(...a) {
-        if (a[0] && typeof a[0] === 'string' && a[0].includes('THREE.Clock')) return
+        if (a[0] && typeof a[0] === 'string' && (a[0].includes('THREE.Clock') || a[0].includes('THREE.WebGLRenderer'))) return
         _warn.apply(console, a)
       }
     </script>

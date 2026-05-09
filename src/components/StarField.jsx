@@ -3,7 +3,15 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { starsVertexShader, starsFragmentShader } from '../shaders/stars'
 
-export default function StarField({ count = 3000, intensity = 1, quality = 2 }) {
+export default function StarField({ 
+  count = 3000, 
+  intensity = 1, 
+  quality = 2, 
+  brightness = 1.0,
+  minRadius = 10,
+  maxRadius = 50,
+  sizeMultiplier = 1.0
+}) {
   const pointsRef = useRef()
   const mousePos = useRef({ x: 0, y: 0 })
 
@@ -17,7 +25,8 @@ export default function StarField({ count = 3000, intensity = 1, quality = 2 }) 
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3
-      const radius = 10 + Math.random() * 40
+      // Use cubic distribution for more realistic uniform volume density
+      const radius = minRadius + Math.pow(Math.random(), 0.5) * (maxRadius - minRadius)
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos(2 * Math.random() - 1)
 
@@ -25,7 +34,7 @@ export default function StarField({ count = 3000, intensity = 1, quality = 2 }) 
       pos[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
       pos[i3 + 2] = radius * Math.cos(phi)
 
-      siz[i] = 0.5 + Math.random() * 2
+      siz[i] = (0.5 + Math.random() * 2) * sizeMultiplier
       spd[i] = 0.1 + Math.random() * 0.5
       rnd[i3] = Math.random()
       rnd[i3 + 1] = Math.random()
@@ -45,7 +54,8 @@ export default function StarField({ count = 3000, intensity = 1, quality = 2 }) 
     uPixelRatio: { value: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 2) : 1 },
     uMouse: { value: new THREE.Vector2(0, 0) },
     uIntensity: { value: intensity ?? 1 },
-    uQuality: { value: quality ?? 2 }
+    uQuality: { value: quality ?? 2 },
+    uBrightness: { value: brightness ?? 1.0 }
   }), [intensity, quality])
 
   useEffect(() => {
@@ -65,6 +75,7 @@ export default function StarField({ count = 3000, intensity = 1, quality = 2 }) 
         uniforms.uMouse.value.y += (mousePos.current.y - uniforms.uMouse.value.y) * 0.05
       }
       if (uniforms.uIntensity) uniforms.uIntensity.value = intensity
+      if (uniforms.uBrightness) uniforms.uBrightness.value = brightness
     }
   })
 

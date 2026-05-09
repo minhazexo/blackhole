@@ -13,6 +13,7 @@ export const nebulaFragmentShader = `
   uniform vec3 uColor1;
   uniform vec3 uColor2;
   uniform vec3 uColor3;
+  uniform float uBrightness;
 
   varying vec2 vUv;
 
@@ -74,11 +75,15 @@ export const nebulaFragmentShader = `
     col += starColor * starBright;
 
     // Radial fade — darker at center (black hole)
-    float radFade = smoothstep(0.0, 0.5, length(uv));
-    col *= radFade;
+    float centerFade = smoothstep(0.0, 0.5, length(uv));
+    
+    // Edge fade — hide the square shape of the plane
+    float edgeFade = 1.0 - smoothstep(0.3, 0.5, length(uv));
+    
+    float mask = centerFade * edgeFade;
+    col *= mask;
+    float alpha = nebula * 0.6 * mask;
 
-    float alpha = nebula * 0.6 * radFade;
-
-    gl_FragColor = vec4(col * 1.8, alpha);
+    gl_FragColor = vec4(col * 1.8 * uBrightness, alpha);
   }
 `;

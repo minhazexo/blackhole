@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { particleVertexShader, particleFragmentShader } from '../shaders/particles'
 
-export default function ParticleSystem({ count = 1500, intensity = 1, quality = 2 }) {
+export default function ParticleSystem({ count = 1500, intensity = 1, quality = 2, brightness = 1.0 }) {
   const pointsRef = useRef()
 
   const [positions, sizes, speeds, offsets, lives, orbitRadii, orbitAngles, inclinations] = useMemo(() => {
@@ -50,13 +50,15 @@ export default function ParticleSystem({ count = 1500, intensity = 1, quality = 
     uTime: { value: 0 },
     uPixelRatio: { value: typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 2) : 1 },
     uGravity: { value: intensity ?? 1 },
-    uQuality: { value: quality ?? 2 }
+    uQuality: { value: quality ?? 2 },
+    uBrightness: { value: brightness ?? 1.0 }
   }), [intensity, quality])
 
   useFrame((state) => {
     if (uniforms) {
       if (uniforms.uTime) uniforms.uTime.value = state.clock.elapsedTime
       if (uniforms.uGravity) uniforms.uGravity.value = intensity
+      if (uniforms.uBrightness) uniforms.uBrightness.value = brightness
     }
   })
 

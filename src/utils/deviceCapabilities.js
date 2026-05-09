@@ -174,9 +174,9 @@ export class DeviceCapabilities {
     switch (this.performanceTier) {
       case 'high':
         // Desktop high-end
-        settings.particleCount = 2000
-        settings.starCount = 4000
-        settings.dustCount = 3000
+        settings.particleCount = 4000
+        settings.starCount = 12000
+        settings.dustCount = 6000
         settings.bloomIntensity = 1.5
         settings.chromaticAberrationOffset = 0.002
         settings.noiseOpacity = 0.08
@@ -184,9 +184,9 @@ export class DeviceCapabilities {
 
       case 'medium':
         // Desktop mid-range / Tablet high-end
-        settings.particleCount = 1500
-        settings.starCount = 3000
-        settings.dustCount = 2500
+        settings.particleCount = 3000
+        settings.starCount = 8000
+        settings.dustCount = 5000
         settings.bloomIntensity = 1.2
         settings.chromaticAberrationOffset = 0.0015
         settings.noiseOpacity = 0.06
@@ -195,9 +195,9 @@ export class DeviceCapabilities {
 
       case 'low':
         // Desktop low-end / Tablet mid-range
-        settings.particleCount = 1000
-        settings.starCount = 2000
-        settings.dustCount = 1500
+        settings.particleCount = 2000
+        settings.starCount = 5000
+        settings.dustCount = 3000
         settings.bloomIntensity = 1.0
         settings.chromaticAberrationOffset = 0.001
         settings.noiseOpacity = 0.04

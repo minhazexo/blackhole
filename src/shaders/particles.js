@@ -85,6 +85,7 @@ export const particleFragmentShader = `
 
   uniform float uTime;
   uniform int uQuality;
+  uniform float uBrightness;
 
   const float SCHWARZSCHILD_RADIUS = 0.15;
 
@@ -141,6 +142,6 @@ export const particleFragmentShader = `
     float edgeFade = smoothstep(0.5, 0.25, dist);
     alpha *= edgeFade;
 
-    gl_FragColor = vec4(color, alpha * 0.75);
+    gl_FragColor = vec4(color * uBrightness, alpha * 0.75);
   }
 `;

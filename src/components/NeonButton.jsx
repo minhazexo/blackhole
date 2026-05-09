@@ -70,11 +70,27 @@ const NeonButton = ({
       glow: 'glow-cyan-sm',
       glowHover: 'hover:glow-cyan-md',
       particle: 'bg-gradient-to-r from-cyan-400 to-purple-400'
+    },
+    gray: {
+      bg: 'bg-gray-500/5',
+      bgHover: 'hover:bg-gray-500/10',
+      border: 'border-gray-500/20',
+      borderHover: 'hover:border-gray-500/40',
+      text: 'text-gray-500',
+      textHover: 'hover:text-gray-400',
+      glow: 'glow-none',
+      glowHover: 'hover:glow-none',
+      particle: 'bg-gray-500'
     }
   }
 
   // Size configurations
   const sizeConfig = {
+    xs: {
+      padding: 'px-2 py-1',
+      text: 'text-[10px]',
+      rounded: 'rounded-lg'
+    },
     sm: {
       padding: 'px-4 py-2',
       text: 'text-xs',
@@ -92,23 +108,26 @@ const NeonButton = ({
     }
   }
 
+  // Safety check for color
+  const activeColor = colorConfig[color] ? color : 'cyan'
+
   // Variant configurations
   const variantConfig = {
     default: {
-      bg: colorConfig[color].bg,
-      bgHover: colorConfig[color].bgHover,
-      border: colorConfig[color].border,
-      borderHover: colorConfig[color].borderHover
+      bg: colorConfig[activeColor].bg,
+      bgHover: colorConfig[activeColor].bgHover,
+      border: colorConfig[activeColor].border,
+      borderHover: colorConfig[activeColor].borderHover
     },
     outline: {
       bg: 'bg-transparent',
-      bgHover: colorConfig[color].bgHover,
-      border: colorConfig[color].border,
-      borderHover: colorConfig[color].borderHover
+      bgHover: colorConfig[activeColor].bgHover,
+      border: colorConfig[activeColor].border,
+      borderHover: colorConfig[activeColor].borderHover
     },
     ghost: {
       bg: 'bg-transparent',
-      bgHover: colorConfig[color].bgHover,
+      bgHover: colorConfig[activeColor].bgHover,
       border: 'border-transparent',
       borderHover: 'border-transparent'
     }
@@ -120,6 +139,7 @@ const NeonButton = ({
 
   // Handle click with ripple and particle effects
   const handleClick = useCallback((e) => {
+    e.stopPropagation()
     if (disabled || loading) return
 
     const rect = e.currentTarget.getBoundingClientRect()
@@ -187,6 +207,8 @@ const NeonButton = ({
     <button
       ref={buttonRef}
       onClick={handleClick}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
       disabled={disabled || loading}
       className={`${baseClasses} ${className}`}
       {...rest}

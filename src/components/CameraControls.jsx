@@ -3,7 +3,11 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 
-export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0.5, viewMode = 'cinematic' }) {
+export default function CameraControls({ 
+  autoRotate = false, 
+  autoRotateSpeed = 0.5, 
+  viewMode = 'cinematic' 
+}) {
   const { camera, gl } = useThree()
   const controlsRef = useRef()
   const targetPosition = useRef(new THREE.Vector3(0, 0, 8))
@@ -52,8 +56,8 @@ export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0
           rotateSpeed: 1.2,
           zoomSpeed: 1.0,
           panSpeed: 0.8,
-          minDistance: 4,
-          maxDistance: 25
+          minDistance: 3.5,
+          maxDistance: 1500
         }
       case 'tablet':
         return {
@@ -61,8 +65,8 @@ export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0
           rotateSpeed: 1.0,
           zoomSpeed: 0.9,
           panSpeed: 0.6,
-          minDistance: 3.5,
-          maxDistance: 22
+          minDistance: 3.2,
+          maxDistance: 1500
         }
       case 'desktop':
       default:
@@ -71,8 +75,8 @@ export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0
           rotateSpeed: 0.8,
           zoomSpeed: 0.8,
           panSpeed: 0.5,
-          minDistance: 3,
-          maxDistance: 20
+          minDistance: 3.0,
+          maxDistance: 1500
         }
     }
   }, [deviceType])
@@ -121,10 +125,20 @@ export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0
   }
 
   const views = useMemo(() => ({
-    cinematic: new THREE.Vector3(0, 2, 8),
-    top: new THREE.Vector3(0, 9, 0.1),
-    edge: new THREE.Vector3(9, 0, 0)
+    cinematic:   new THREE.Vector3(0, 2, 8),
+    top:         new THREE.Vector3(0, 20, 0.1),
+    edge:        new THREE.Vector3(20, 0, 0),
+    nadir:       new THREE.Vector3(0, -20, 0.1),
+    close:       new THREE.Vector3(0, 1, 6),
+    distant:     new THREE.Vector3(0, 15, 60),
+    oblique:     new THREE.Vector3(15, 10, 15),
+    wormhole:    new THREE.Vector3(0, 0, 3.5), // Safety: > minDistance (3)
+    horizon:     new THREE.Vector3(8, 0.5, 8),
+    galactic:    new THREE.Vector3(120, 60, 200)
   }), [])
+
+  // View transitioning state
+  const isTransitioning = useRef(false)
 
   const targetViewPos = useRef(null)
 
@@ -139,71 +153,32 @@ export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0
     if (controlsRef.current) {
       const time = state.clock.elapsedTime
       
-      // Cinematic handheld motion - subtle camera shake
-      handheldOffset.current.x = Math.sin(time * 2.3 + handheldPhase.current.x) * 0.002
-      handheldOffset.current.y = Math.cos(time * 1.7 + handheldPhase.current.y) * 0.002
-      handheldOffset.current.z = Math.sin(time * 1.9 + handheldPhase.current.z) * 0.002
-      
-      // Apply handheld offset to camera
-      camera.position.add(handheldOffset.current)
-      
       // If we have a target view position to animate to
       if (targetViewPos.current) {
+        isTransitioning.current = true
         // Smooth cinematic lerp with inertia
-        const lerpFactor = Math.min(delta * 2.0, 1.0)
+        const lerpFactor = Math.min(delta * 2.5, 1.0)
         camera.position.lerp(targetViewPos.current, lerpFactor)
         
         // If close enough, stop animating so user can take control
-        if (camera.position.distanceTo(targetViewPos.current) < 0.1) {
+        if (camera.position.distanceTo(targetViewPos.current) < 0.05) {
           targetViewPos.current = null
+          isTransitioning.current = false
         }
       }
       
-      // Smooth camera rotation for cinematic feel
-      const targetQuaternion = camera.quaternion.clone()
-      camera.quaternion.slerp(targetQuaternion, delta * 0.5)
-      
-      controlsRef.current.update()
-      
-      // Remove handheld offset after rendering
-      camera.position.sub(handheldOffset.current)
+      // Update OrbitControls with transition-aware autoRotate
+      if (controlsRef.current) {
+        controlsRef.current.autoRotate = autoRotate && !isTransitioning.current
+        controlsRef.current.update()
+      }
+
+      // Subtle rotation wobble for handheld feel (non-drifting, non-accumulating)
+      if (!isTransitioning.current) {
+        camera.rotation.z = Math.sin(time * 1.2) * 0.004
+      }
     }
   })
-
-  // Set up event listeners for momentum tracking
-  useEffect(() => {
-    const canvas = gl.domElement
-    
-    canvas.addEventListener('mousedown', handleMouseDown)
-    canvas.addEventListener('mousemove', handleMouseMove)
-    canvas.addEventListener('mouseup', handleMouseUp)
-    canvas.addEventListener('mouseleave', handleMouseUp)
-    
-    // Touch events for mobile devices
-    canvas.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        handleMouseDown(e.touches[0])
-      }
-    })
-    
-    canvas.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1) {
-        handleMouseMove(e.touches[0])
-      }
-    })
-    
-    canvas.addEventListener('touchend', handleMouseUp)
-    
-    return () => {
-      canvas.removeEventListener('mousedown', handleMouseDown)
-      canvas.removeEventListener('mousemove', handleMouseMove)
-      canvas.removeEventListener('mouseup', handleMouseUp)
-      canvas.removeEventListener('mouseleave', handleMouseUp)
-      canvas.removeEventListener('touchstart', handleMouseDown)
-      canvas.removeEventListener('touchmove', handleMouseMove)
-      canvas.removeEventListener('touchend', handleMouseUp)
-    }
-  }, [gl.domElement])
 
   return (
     <OrbitControls
@@ -216,14 +191,18 @@ export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0
       panSpeed={adaptiveSettings.panSpeed}
       minDistance={adaptiveSettings.minDistance}
       maxDistance={adaptiveSettings.maxDistance}
-      minPolarAngle={Math.PI / 6}
-      maxPolarAngle={Math.PI - Math.PI / 6}
-      autoRotate={autoRotate}
+      minPolarAngle={Math.PI / 12}
+      maxPolarAngle={Math.PI - Math.PI / 12}
+      autoRotate={autoRotate && !isTransitioning.current}
       autoRotateSpeed={autoRotateSpeed}
       enablePan={true}
       enableZoom={true}
       enableRotate={true}
-      // Touch-specific settings for better mobile experience
+      onStart={() => {
+        // Cancel any ongoing programmatic transition if the user takes over
+        targetViewPos.current = null
+        isTransitioning.current = false
+      }}
       touches={{
         ONE: THREE.TOUCH.ROTATE,
         TWO: THREE.TOUCH.DOLLY_PAN

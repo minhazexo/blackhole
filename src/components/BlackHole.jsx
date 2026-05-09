@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { blackHoleVertexShader, blackHoleFragmentShader } from '../shaders/blackHole'
 
-export default function BlackHole({ intensity = 1, quality = 2 }) {
+export default function BlackHole({ intensity = 1, quality = 2, brightness = 1.0 }) {
   const meshRef   = useRef()
   const groupRef  = useRef()
   const glowRef   = useRef()
@@ -15,7 +15,8 @@ export default function BlackHole({ intensity = 1, quality = 2 }) {
     uIntensity:     { value: intensity ?? 1 },
     uShockwaveTime: { value: 0 },
     uMouse:         { value: new THREE.Vector2(0, 0) },
-    uQuality:       { value: quality ?? 2 }
+    uQuality:       { value: quality ?? 2 },
+    uBrightness:    { value: brightness ?? 1.0 }
   }), []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame((state) => {
@@ -26,6 +27,7 @@ export default function BlackHole({ intensity = 1, quality = 2 }) {
       uniforms.uShockwaveTime.value = t
       uniforms.uIntensity.value     = intensity
       uniforms.uQuality.value       = quality
+      uniforms.uBrightness.value    = brightness
 
       // Smooth mouse interpolation
       uniforms.uMouse.value.x += (mousePos.current.x - uniforms.uMouse.value.x) * 0.05

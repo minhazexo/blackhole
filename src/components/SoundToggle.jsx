@@ -1,38 +1,23 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useAudio } from '../hooks/useAudio'
+import { useState, useCallback } from 'react'
 
+/**
+ * SoundToggle Component
+ * Logic-only component that handles sound state notifications.
+ * The actual audio context is managed in App.jsx.
+ */
 export default function SoundToggle({ onToggle }) {
   const [enabled, setEnabled] = useState(false)
-  const { initializeAudio, playAmbientSound, setVolume, cleanup } = useAudio()
 
+  // This function is kept for legacy compatibility if called directly
+  // though the main control now happens via the UI.jsx component.
   const toggleSound = useCallback(() => {
-    if (!enabled) {
-      // Initialize and enable audio
-      initializeAudio()
-      playAmbientSound(true)
-      setEnabled(true)
-    } else {
-      // Disable audio
-      playAmbientSound(false)
-      setEnabled(false)
-    }
+    const newState = !enabled
+    setEnabled(newState)
     
-    // Notify parent component
     if (onToggle) {
-      onToggle(!enabled)
+      onToggle(newState)
     }
-  }, [enabled, initializeAudio, playAmbientSound, onToggle])
+  }, [enabled, onToggle])
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (enabled) {
-        cleanup()
-      }
-    }
-  }, [enabled, cleanup])
-
-  // This component doesn't render anything visible
-  // It's controlled by the UI component
   return null
 }

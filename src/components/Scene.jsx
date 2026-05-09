@@ -71,7 +71,10 @@ export default function Scene({
   enableParticles = true,
   enableDust = true,
   quality = 2,
-  viewMode = 'cinematic'
+  brightness = 1.0,
+  viewMode = 'cinematic',
+  showNebula = true,
+  autoRotateSpeed = 0.5
 }) {
   // Ensure all props have safe default values
   const safeIntensity = intensity ?? 1
@@ -120,7 +123,7 @@ export default function Scene({
 
   return (
     <Canvas 
-      camera={{ position: [0, 0, 8], fov: 55 }} 
+      camera={{ position: [0, 0, 8], fov: 55, far: 2000 }} 
       dpr={[1, pixelRatio]}
       gl={{ 
         antialias: antialias,
@@ -139,34 +142,55 @@ export default function Scene({
       <PerformanceManager />
       
       {/* Camera controls with smooth interactions */}
-      <CameraControls autoRotate={safeAutoRotate} autoRotateSpeed={0.5} viewMode={viewMode} />
+      <CameraControls autoRotate={safeAutoRotate} autoRotateSpeed={autoRotateSpeed} viewMode={viewMode} />
       
       {/* Post-processing pipeline with quality settings */}
-      <PostProcessing quality={safeQuality} />
+      <PostProcessing quality={safeQuality} brightness={brightness} />
       
       {/* Scroll-triggered space transitions */}
       <SpaceTransition scrollProgress={scroll.current?.target ?? 0} quality={safeQuality} />
       
       <Suspense fallback={null}>
-        {/* Background elements - only in medium/high quality */}
-        {safeQuality >= 1 && <Nebula />}
+        {/* Background elements - Layered Nebulae distributed spherically for immersion */}
+        {showNebula && safeQuality >= 1 && (
+          <>
+            <Nebula brightness={brightness * 1.2} position={[0, 0, -40]} scale={2.5} />
+            <Nebula brightness={brightness * 0.8} position={[-80, 40, -120]} scale={6.0} />
+            <Nebula brightness={brightness * 0.6} position={[100, -50, -200]} scale={10.0} />
+            <Nebula brightness={brightness * 0.5} position={[-150, -100, -350]} scale={20.0} />
+            <Nebula brightness={brightness * 0.4} position={[250, 180, -500]} scale={35.0} />
+            <Nebula brightness={brightness * 0.3} position={[0, -300, -800]} scale={60.0} />
+            {/* Add some behind the camera for full 360 immersion */}
+            <Nebula brightness={brightness * 0.5} position={[150, 80, 300]} scale={25.0} />
+            <Nebula brightness={brightness * 0.4} position={[-200, -60, 450]} scale={35.0} />
+          </>
+        )}
         
-        {/* Star field with enhanced mouse interaction */}
-        <StarField count={starCount} intensity={safeIntensity} quality={safeQuality} />
+        {/* VAST STAR FIELD LAYERS */}
+        {/* Layer 1: Proximate High-Detail Stars */}
+        <StarField count={starCount} intensity={safeIntensity} quality={safeQuality} brightness={brightness} minRadius={15} maxRadius={80} sizeMultiplier={1.0} />
+        
+        {/* Layer 2: Mid-range Galactic Stars */}
+        <StarField count={Math.round(starCount * 1.5)} intensity={safeIntensity} quality={safeQuality} brightness={brightness * 0.75} minRadius={80} maxRadius={250} sizeMultiplier={0.7} />
+        
+        {/* Layer 3: Distant Deep-Space Stars (Background) */}
+        <StarField count={Math.round(starCount * 12.0)} intensity={safeIntensity} quality={safeQuality} brightness={brightness * 0.4} minRadius={300} maxRadius={1200} sizeMultiplier={0.3} />
         
         {/* Particle system - integrated with intensity */}
         {safeEnableParticles && safeQuality >= 0 && (
-          <ParticleSystem count={particleCount} intensity={safeIntensity} quality={safeQuality} />
+          <ParticleSystem count={particleCount} intensity={safeIntensity} quality={safeQuality} brightness={brightness} />
         )}
         
         {/* Dust field - integrated with intensity */}
         {safeEnableDust && safeQuality >= 0 && (
-          <DustField count={dustCount} intensity={safeIntensity} quality={safeQuality} />
+          <DustField count={dustCount} intensity={safeIntensity} quality={safeQuality} brightness={brightness} />
         )}
         
         {/* Main black hole with enhanced shader */}
-        <BlackHole intensity={safeIntensity} quality={safeQuality} />
+        <BlackHole intensity={safeIntensity} quality={safeQuality} brightness={brightness} />
       </Suspense>
     </Canvas>
   )
 }
+// Final Production Check Log
+console.log('%c ◎ OPTICS_ENGINE: ACTIVE ', 'color: #00ffff; font-family: monospace; font-weight: bold;');

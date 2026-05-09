@@ -71,6 +71,7 @@ export const dustFragmentShader = `
 
   uniform float uTime;
   uniform int uQuality;
+  uniform float uBrightness;
 
   void main() {
     float dist = length(gl_PointCoord - 0.5);
@@ -92,6 +93,6 @@ export const dustFragmentShader = `
     float glow = exp(-dist * 5.0) * 0.4;
     color += vColor * glow;
 
-    gl_FragColor = vec4(color, alpha * 0.45);
+    gl_FragColor = vec4(color * uBrightness, alpha * 0.45);
   }
 `;
