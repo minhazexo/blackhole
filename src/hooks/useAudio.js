@@ -40,13 +40,6 @@ export function useAudio() {
         musicRef.current = new Audio(`${baseUrl}videoplayback.mp3`)
         musicRef.current.loop = true
         musicRef.current.volume = 0.7 // Increased volume for better presence
-        
-        // Error handling with fallback to cinematic remote track
-        musicRef.current.onerror = () => {
-          console.warn('videoplayback.mp3 failed to load. Using fallback cinematic track.')
-          musicRef.current.src = 'https://assets.mixkit.co/music/preview/mixkit-deep-space-97.mp3'
-          musicRef.current.load()
-        }
       }
 
       isInitializedRef.current = true
@@ -79,33 +72,9 @@ export function useAudio() {
       // Try to play the background music file
       if (musicRef.current) {
         musicRef.current.play().catch(err => {
-          console.warn('Interstellar.mp3 not found or blocked. Falling back to synthetic drone.', err)
+          console.warn('videoplayback.mp3 not found or blocked.', err)
         })
       }
-
-      // Maintain the procedural drone as a "thickener" layer
-      const oscs = [
-        { freq: 40, type: 'sine', gain: 0.04 },
-        { freq: 60, type: 'sine', gain: 0.03 },
-        { freq: 80, type: 'triangle', gain: 0.02 },
-        { freq: 220, type: 'sine', gain: 0.015 }
-      ];
-
-      oscs.forEach(cfg => {
-        const osc = audioContextRef.current.createOscillator();
-        const g = audioContextRef.current.createGain();
-        osc.type = cfg.type;
-        osc.frequency.setValueAtTime(cfg.freq, currentTime);
-        osc.frequency.exponentialRampToValueAtTime(cfg.freq * 0.9, currentTime + 10);
-        
-        g.gain.setValueAtTime(0, currentTime);
-        g.gain.linearRampToValueAtTime(cfg.gain, currentTime + 2);
-        
-        osc.connect(g);
-        g.connect(ambientGainRef.current);
-        osc.start(currentTime);
-        activeOscillators.current.push(osc);
-      });
 
       // Fade in ambient
       ambientGainRef.current.gain.setTargetAtTime(1, currentTime, 1.5)
@@ -132,71 +101,11 @@ export function useAudio() {
   }, [])
 
   const playSpatialSound = useCallback((position, intensity = 1) => {
-    if (!audioContextRef.current || !spatialGainRef.current) return
-
-    const currentTime = audioContextRef.current.currentTime
-
-    // Create spatial whoosh effect
-    const oscillator = audioContextRef.current.createOscillator()
-    const gain = audioContextRef.current.createGain()
-    const panner = audioContextRef.current.createStereoPanner()
-
-    oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(200 + Math.random() * 100, currentTime)
-    oscillator.frequency.exponentialRampToValueAtTime(50, currentTime + 0.5)
-
-    gain.gain.setValueAtTime(0, currentTime)
-    gain.gain.linearRampToValueAtTime(0.05 * intensity, currentTime + 0.1)
-    gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.5)
-
-    // Pan based on position
-    panner.pan.setValueAtTime(position.x * 0.5, currentTime)
-
-    oscillator.connect(gain)
-    gain.connect(panner)
-    panner.connect(spatialGainRef.current)
-
-    oscillator.start(currentTime)
-    oscillator.stop(currentTime + 0.5)
+    // Disabled as per user request: only videoplayback.mp3 allowed.
   }, [])
 
   const playInteractionSound = useCallback((type = 'click') => {
-    if (!audioContextRef.current || !spatialGainRef.current) return
-
-    // Proactive resume for interaction sounds
-    if (audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume()
-    }
-
-    const currentTime = audioContextRef.current.currentTime
-
-    const oscillator = audioContextRef.current.createOscillator()
-    const gain = audioContextRef.current.createGain()
-
-    if (type === 'click') {
-      oscillator.type = 'sine'
-      oscillator.frequency.setValueAtTime(800, currentTime)
-      oscillator.frequency.exponentialRampToValueAtTime(400, currentTime + 0.1)
-      gain.gain.setValueAtTime(0.03, currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.1)
-    } else if (type === 'hover') {
-      oscillator.type = 'sine'
-      oscillator.frequency.setValueAtTime(600, currentTime)
-      gain.gain.setValueAtTime(0.01, currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.05)
-    } else if (type === 'pulse') {
-      oscillator.type = 'triangle'
-      oscillator.frequency.setValueAtTime(100, currentTime)
-      oscillator.frequency.exponentialRampToValueAtTime(50, currentTime + 0.3)
-      gain.gain.setValueAtTime(0.02, currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.3)
-    }
-
-    oscillator.connect(gain)
-    gain.connect(spatialGainRef.current)
-
-    oscillator.start(currentTime)
-    oscillator.stop(currentTime + 0.3)
+    // Disabled as per user request: only videoplayback.mp3 allowed.
   }, [])
 
   const setVolume = useCallback((ambient = 1, spatial = 1) => {
