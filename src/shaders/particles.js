@@ -86,6 +86,8 @@ export const particleFragmentShader = `
   uniform float uTime;
   uniform int uQuality;
 
+  const float SCHWARZSCHILD_RADIUS = 0.15;
+
   float hash(float n) { return fract(sin(n) * 43758.5453123); }
 
   void main() {
@@ -94,6 +96,10 @@ export const particleFragmentShader = `
 
     float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
     alpha *= vLife;
+
+    // Horizon absorption - particles fade near event horizon
+    float horizonFade = smoothstep(SCHWARZSCHILD_RADIUS, SCHWARZSCHILD_RADIUS * 1.5, vOrbitRadius);
+    alpha *= horizonFade;
 
     // Temperature gradient: inner = blue-hot, outer = orange-cool
     float temp = 1.0 - smoothstep(0.4, 3.5, vOrbitRadius);

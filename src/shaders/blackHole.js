@@ -43,6 +43,23 @@ export const blackHoleFragmentShader = `
                    mix(hash(n + 270.0), hash(n + 271.0), f.x), f.y), f.z);
   }
 
+  // Gravitational redshift factor - light loses energy escaping black hole
+  float gravitationalRedshift(float r) {
+    // z = 1/sqrt(1 - Rs/r) - 1
+    // Redshift factor = 1/(1 + z)
+    float z = 1.0 / sqrt(max(0.001, 1.0 - RS / r)) - 1.0;
+    return 1.0 / (1.0 + z);
+  }
+
+  // Enhanced relativistic Doppler effect with proper formula
+  float relativisticDoppler(vec3 viewDir, vec3 velocityVec) {
+    float beta = length(velocityVec) * 0.5; // Normalized velocity
+    float cosTheta = dot(normalize(viewDir), normalize(velocityVec));
+    // Relativistic Doppler: sqrt((1-beta)/(1+beta)) * (1 + beta*cosTheta)
+    float doppler = sqrt((1.0 - beta) / (1.0 + beta)) * (1.0 + beta * cosTheta);
+    return clamp(doppler, 0.2, 3.0);
+  }
+
   // Sample the accretion disk density and color at a given 3D point
   vec4 sampleDisk(vec3 p) {
     float r = length(p.xz);
@@ -77,13 +94,15 @@ export const blackHoleFragmentShader = `
     vec3 color = mix(colCool, colMid, temp);
     color = mix(color, colHot, smoothstep(0.7, 1.0, temp));
 
-    // Doppler beaming (blueshift approaching, redshift receding)
+    // Enhanced Doppler beaming (blueshift approaching, redshift receding)
     vec3 viewDir = normalize(cameraPosition - p);
     vec3 velocityVec = vec3(-sin(angle), 0.0, cos(angle)) * vel;
-    float doppler = dot(viewDir, velocityVec);
-    float beam = pow(clamp(1.0 + doppler * 1.5, 0.2, 3.0), 3.0);
+    float doppler = relativisticDoppler(viewDir, velocityVec);
+    float beam = pow(doppler, 3.0);
     
-    color *= beam * 2.5 * uIntensity;
+    // Apply gravitational redshift - colors deepen near horizon
+    float redshift = gravitationalRedshift(r);
+    color *= beam * 2.5 * uIntensity * redshift;
 
     return vec4(color * density, density * 0.8);
   }

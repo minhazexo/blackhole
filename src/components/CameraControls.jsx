@@ -15,6 +15,10 @@ export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0
   const lastMouseTime = useRef(0)
   const isDragging = useRef(false)
   const momentumActive = useRef(false)
+  
+  // Cinematic handheld motion
+  const handheldOffset = useRef(new THREE.Vector3())
+  const handheldPhase = useRef({ x: Math.random() * 100, y: Math.random() * 100, z: Math.random() * 100 })
 
   // Detect device type for adaptive settings
   const deviceType = useMemo(() => {
@@ -130,18 +134,39 @@ export default function CameraControls({ autoRotate = false, autoRotateSpeed = 0
     }
   }, [viewMode, views])
 
-  // Native damping from OrbitControls
+  // Native damping from OrbitControls with cinematic inertia
   useFrame((state, delta) => {
     if (controlsRef.current) {
+      const time = state.clock.elapsedTime
+      
+      // Cinematic handheld motion - subtle camera shake
+      handheldOffset.current.x = Math.sin(time * 2.3 + handheldPhase.current.x) * 0.002
+      handheldOffset.current.y = Math.cos(time * 1.7 + handheldPhase.current.y) * 0.002
+      handheldOffset.current.z = Math.sin(time * 1.9 + handheldPhase.current.z) * 0.002
+      
+      // Apply handheld offset to camera
+      camera.position.add(handheldOffset.current)
+      
       // If we have a target view position to animate to
       if (targetViewPos.current) {
-        camera.position.lerp(targetViewPos.current, delta * 3)
+        // Smooth cinematic lerp with inertia
+        const lerpFactor = Math.min(delta * 2.0, 1.0)
+        camera.position.lerp(targetViewPos.current, lerpFactor)
+        
         // If close enough, stop animating so user can take control
         if (camera.position.distanceTo(targetViewPos.current) < 0.1) {
           targetViewPos.current = null
         }
       }
+      
+      // Smooth camera rotation for cinematic feel
+      const targetQuaternion = camera.quaternion.clone()
+      camera.quaternion.slerp(targetQuaternion, delta * 0.5)
+      
       controlsRef.current.update()
+      
+      // Remove handheld offset after rendering
+      camera.position.sub(handheldOffset.current)
     }
   })
 
