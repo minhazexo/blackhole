@@ -87,11 +87,10 @@ export default function UI({
         </div>
       </div>
 
-      {/* ───── CENTER TITLE ───── */}
+      {/* ───── CENTER TITLE / MOBILE HEADER ───── */}
       <div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                   z-10 pointer-events-none w-full px-4"
-        style={{ marginTop: '-15vh' }}
+        className="fixed left-1/2 -translate-x-1/2 z-10 pointer-events-none w-full px-4
+                   top-[14vh] md:top-1/2 md:-translate-y-1/2 md:-mt-[15vh]"
       >
         <GlassPanel
           variant="prominent"
