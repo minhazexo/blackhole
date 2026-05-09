@@ -1,11 +1,11 @@
 $body = @{
     messages = @(
         @{
-            role = "system"
+            role    = "system"
             content = "You are a friendly assistant"
         },
         @{
-            role = "user"
+            role    = "user"
             content = @"
 Create a cinematic ultra realistic black hole website using React, Three.js, React Three Fiber and GLSL shaders.
 
@@ -43,7 +43,7 @@ Invoke-RestMethod `
     -Uri "https://api.cloudflare.com/client/v4/accounts/YOUR_ACCOUNT_ID/ai/run/@cf/moonshotai/kimi-k2.6" `
     -Method POST `
     -Headers @{
-        Authorization = "Bearer YOUR_API_TOKEN"
-    } `
+    Authorization = "Bearer YOUR_API_TOKEN"
+} `
     -Body $body `
     -ContentType "application/json"
