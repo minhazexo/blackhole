@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚫</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Horizon | Black Hole Observatory</title>
+    
+    <!-- Google Fonts: Inter for UI text, JetBrains Mono for data displays -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/blackhole/assets/index-CJ_wBLy2.js"></script>
+    <link rel="stylesheet" crossorigin href="/blackhole/assets/index-B2koZQwD.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Suppress Three.js deprecation warnings
+      const _warn = console.warn
+      console.warn = function(...a) {
+        if (a[0] && typeof a[0] === 'string' && a[0].includes('THREE.Clock')) return
+        _warn.apply(console, a)
+      }
+    </script>
+  </body>
+</html>
