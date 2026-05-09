@@ -30,11 +30,15 @@ function AppContent() {
   // Initialize device capabilities
   const deviceCapabilities = getDeviceCapabilities()
   
-  // Set initial quality (Static default: Low)
+  // Initialize device capabilities and set initial quality
   useEffect(() => {
-    setQuality(0)
+    const caps = getDeviceCapabilities();
+    const tier = caps.performanceTier;
+    const initialQuality = (tier === 'high') ? 2 : (tier === 'medium' ? 1 : 0);
+    setQuality(initialQuality);
+    
     console.log('%c ◎ PROJECT SINGULARITY INITIALIZED ', 'background: #000; color: #00ffff; font-weight: bold; border: 1px solid #00ffff; padding: 4px;');
-    console.log('%c > STATUS: NOMINAL \n > VERSION: 2.8.4 \n > CORE_METRIC: KERR_VACUUM ', 'color: #00ffff; font-family: monospace;');
+    console.log(`%c > STATUS: NOMINAL \n > VERSION: 2.8.4 \n > CORE_METRIC: KERR_VACUUM \n > TIER: ${tier.toUpperCase()} `, 'color: #00ffff; font-family: monospace;');
   }, [])
   
   // Performance context - stats and quality are managed by PerformanceManager inside Canvas

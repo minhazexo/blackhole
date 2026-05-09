@@ -1,3 +1,20 @@
+/// git add .
+git commit -m "optimize for netlify deployment"
+git push origin main
+////////
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Black Hole Simulation - Performance Analysis & Optimization Report
 
 ## Executive Summary

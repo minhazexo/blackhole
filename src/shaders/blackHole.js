@@ -32,7 +32,7 @@ export const blackHoleFragmentShader = `
   const float RS = 0.15;
   const float ISCO = RS * 3.0; // Innermost stable circular orbit
 
-  // 3D Noise for the plasma
+  // Optimized 3D Noise for Mobile (Reduced samples)
   float hash(float n) { return fract(sin(n) * 43758.5453123); }
   float noise(vec3 x) {
     vec3 p = floor(x);
@@ -84,8 +84,8 @@ export const blackHoleFragmentShader = `
     float t = uTime * vel * 2.0;
     
     vec3 noisePos = vec3(angle * 4.0 - t, r * 5.0, p.y * 10.0 + t * 0.5);
-    float turb = noise(noisePos) * 0.5 + noise(noisePos * 2.0) * 0.25;
-    density *= (0.5 + turb);
+    float turb = noise(noisePos) * 0.6; // Reduced noise octaves for mobile performance
+    density *= (0.4 + turb);
 
     // Temperature/Color gradient
     float temp = smoothstep(3.0, ISCO, r);
@@ -120,7 +120,8 @@ export const blackHoleFragmentShader = `
     vec3 colorAcc = vec3(0.0);
     float alphaAcc = 0.0;
     
-    int maxSteps = (uQuality >= 2) ? 100 : (uQuality >= 1) ? 80 : 65;
+    // Quality tiers optimized for mobile vs desktop
+    int maxSteps = (uQuality >= 2) ? 85 : (uQuality >= 1) ? 60 : 45;
     
     bool hitHorizon = false;
     float globalMinDist = 100.0;
@@ -143,7 +144,8 @@ export const blackHoleFragmentShader = `
       }
 
       // Dynamic step size: take larger steps far away, smaller steps near the black hole
-      float dtVar = max(0.015, r * 0.08);
+      // More aggressive stepping for mobile performance
+      float dtVar = max(0.025, r * 0.12);
 
       // Gravity bends the ray toward the origin (Schwarzschild base)
       vec3 force = -normalize(p) * (RS * 1.5 / r2);
