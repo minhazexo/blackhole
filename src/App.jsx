@@ -80,6 +80,15 @@ function AppContent() {
     console.log('%c ◎ HUD_INTERFACE: LINKED ', 'color: #00ffff; font-family: monospace;');
   }, [])
 
+  // Auto-start audio when loading completes (triggered by user "Enter" click)
+  const hasAutoStartedRef = useRef(false)
+  useEffect(() => {
+    if (!loading && soundEnabled && !hasAutoStartedRef.current) {
+      hasAutoStartedRef.current = true
+      handleSoundToggle(true)
+    }
+  }, [loading, soundEnabled, handleSoundToggle])
+
   // Handle intensity toggle
   const handleIntensityToggle = useCallback(() => {
     cycleIntensity()

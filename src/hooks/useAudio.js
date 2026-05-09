@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect, useMemo } from 'react'
 
 export function useAudio() {
   const audioContextRef = useRef(null)
@@ -222,7 +222,7 @@ export function useAudio() {
     }
   }, [])
 
-  return {
+  return useMemo(() => ({
     initializeAudio,
     playAmbientSound,
     playSpatialSound,
@@ -230,5 +230,5 @@ export function useAudio() {
     setVolume,
     cleanup,
     isInitialized: isInitializedRef.current
-  }
+  }), [initializeAudio, playAmbientSound, playSpatialSound, playInteractionSound, setVolume, cleanup])
 }

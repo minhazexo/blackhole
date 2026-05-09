@@ -79,7 +79,7 @@ export default function UI({
 
       {/* ───── TOP-RIGHT HUD: SYSTEM UTILITIES ───── */}
       <div className={`fixed top-4 right-4 md:top-6 md:right-8 z-30 flex flex-row gap-1 md:gap-2 pointer-events-auto transition-all duration-700 ${uiVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
-        <NeonButton onClick={onSoundToggle} color={soundEnabled ? "cyan" : "gray"} variant="ghost" size="xs" className="px-2 md:px-3">
+        <NeonButton onClick={() => onSoundToggle(!soundEnabled)} color={soundEnabled ? "cyan" : "gray"} variant="ghost" size="xs" className="px-2 md:px-3">
           {soundEnabled ? '🔊' : '🔇'}
           <span className="hidden md:inline ml-1">{soundEnabled ? 'AUDIO: ON' : 'AUDIO: OFF'}</span>
         </NeonButton>

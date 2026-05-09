@@ -28,6 +28,7 @@ export const blackHoleFragmentShader = `
   #define PI 3.14159265359
 
   // Black hole mass / Schwarzschild radius
+  // Black hole mass / Schwarzschild radius
   const float RS = 0.15;
   const float ISCO = RS * 3.0; // Innermost stable circular orbit
 
